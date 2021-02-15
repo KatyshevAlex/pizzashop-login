@@ -34,20 +34,27 @@ public class LoginService implements ILoginService {
 
     @Override
     public String createCustomer(String token, Customer customer) {
+        Boolean updateToken = false;
         if(token.isEmpty()){
             customer.setLogin("GUEST "+ UUID.randomUUID());
             customer = daoFeign.createCustomer(customer);
+            updateToken = true;
         } else {
             log.debug("sign up user (update to AUTHORISED)");
             Customer c = daoFeign.searchCustomer(getCustomerByToken(token));
+            if(!c.getLogin().equals(customer.getLogin())){
+                updateToken = true;
+            }
             customer.setCart(c.getCart());
             customer.setNotFinished(c.getNotFinished());
             customer.setId(c.getId());
             customer = daoFeign.updateCustomer(customer);
         }
 
-
-        return createNewToken(customer);
+        if(updateToken)
+            return createNewToken(customer);
+        else
+            return token;
     }
 
     @Override
