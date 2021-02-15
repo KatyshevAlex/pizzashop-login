@@ -5,6 +5,7 @@ import com.pizzashop.login.enity.Customer;
 import com.pizzashop.login.enity.DTO.AuthResponse;
 import com.pizzashop.login.enity.DTO.LoginRequest;
 import com.pizzashop.login.service.interfaces.ILoginService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/security")
+@Slf4j
 public class LoginController {
     @Autowired
     private ILoginService loginService;
@@ -24,6 +26,7 @@ public class LoginController {
     @GetMapping("/signup")
     @ResponseBody
     public ResponseEntity<AuthResponse> signUp(){
+        log.debug("request: /signup, method GET");
         String response = loginService.createCustomer("", new Customer());
         HttpHeaders headers = makeHeaders(response);
         return new ResponseEntity<>(new AuthResponse(response), headers, HttpStatus.CREATED);
@@ -32,6 +35,7 @@ public class LoginController {
     @PostMapping("/signup")
     @ResponseBody
     public ResponseEntity<AuthResponse> signUp(@RequestHeader(value=authHeader) String token, @RequestBody Customer customer){
+        log.debug("request: /signup, method POST, customer: {}",customer.toString());
         String response = loginService.createCustomer(token,customer);
 
         HttpHeaders headers = makeHeaders(response);
@@ -43,6 +47,7 @@ public class LoginController {
     @PostMapping("/signin")
     @ResponseBody
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest){
+        log.debug("request: /signin, method POST, login: {}",loginRequest.getLogin());
         String token = loginService.login(loginRequest);
         HttpHeaders headers = makeHeaders(token);
 
@@ -50,9 +55,10 @@ public class LoginController {
     }
 
 
-    @PostMapping("/signout")
+    @GetMapping("/signout")
     @ResponseBody
     public ResponseEntity<AuthResponse> logout(@RequestHeader(value=authHeader) String token) {
+        log.debug("request: /signout, method GET, token: {}", token);
         HttpHeaders headers = new HttpHeaders();
         if (loginService.logout(token)) {
             headers.remove(authHeader);
@@ -64,6 +70,7 @@ public class LoginController {
 
     @GetMapping("/get-customer-by-token")
     public Customer isValidToken(@RequestHeader(value=authHeader) String token) {
+        log.debug("request: /get-customer-by-token, method GET, token: {}", token);
         return loginService.getCustomerByToken(token);
     }
 

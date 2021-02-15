@@ -1,17 +1,16 @@
 package com.pizzashop.login.service.impl;
 
 
-import com.pizzashop.login.service.DaoFeign;
-import com.pizzashop.login.service.JwtTokenProvider;
 import com.pizzashop.login.enity.Customer;
 import com.pizzashop.login.enity.DTO.LoginRequest;
 import com.pizzashop.login.exceptions.UnauthorisedException;
+import com.pizzashop.login.service.DaoFeign;
+import com.pizzashop.login.service.JwtTokenProvider;
 import com.pizzashop.login.service.interfaces.ILoginService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -22,7 +21,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-@Transactional("transactionManager")
 @Slf4j
 public class LoginService implements ILoginService {
 
@@ -40,6 +38,7 @@ public class LoginService implements ILoginService {
             customer.setLogin("GUEST "+ UUID.randomUUID());
             customer = daoFeign.createCustomer(customer);
         } else {
+            log.debug("sign up user (update to AUTHORISED)");
             Customer c = daoFeign.searchCustomer(getCustomerByToken(token));
             customer.setCart(c.getCart());
             customer.setNotFinished(c.getNotFinished());
@@ -53,6 +52,7 @@ public class LoginService implements ILoginService {
 
     @Override
     public String login(LoginRequest loginRequest) {
+        log.debug("user {} try to enter",loginRequest.getLogin());
         Customer customer = fetchCustomerDetails(loginRequest);
 
         validateCustomer.accept(customer);
@@ -60,7 +60,7 @@ public class LoginService implements ILoginService {
         validatePassword.accept(loginRequest, customer);
 
         String jwtToken = jwtTokenProvider.createToken(loginRequest.getLogin());
-
+        log.debug("user {} got token {}",loginRequest.getLogin(),jwtToken);
         return jwtToken;
     }
 
